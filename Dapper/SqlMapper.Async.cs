@@ -410,7 +410,11 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             var cancel = command.CancellationToken;
-            using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#else
+		    await using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#endif            
             {
                 DbDataReader reader = null;
                 try
@@ -454,11 +458,26 @@ namespace Dapper
                 }
                 finally
                 {
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
                     using (reader) { /* dispose if non-null */ }
                     if (wasClosed) cnn.Close();
+#else
+                    await using (reader) { /* dispose if non-null */ }
+                    if (wasClosed)
+                    {
+                        if (cnn is DbConnection dbConn)
+                        {
+                            await dbConn.CloseAsync();
+                        }
+                        else
+                        {
+                            cnn.Close();
+                        }
+                    }
+#endif                    
                 }
             }
-        }
+        }    
 
         private static async Task<T> QueryRowAsync<T>(this IDbConnection cnn, Row row, Type effectiveType, CommandDefinition command)
         {
@@ -467,7 +486,11 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             var cancel = command.CancellationToken;
-            using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#else
+		    await using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))            
+#endif                  
             {
                 DbDataReader reader = null;
                 try
@@ -494,8 +517,23 @@ namespace Dapper
                 }
                 finally
                 {
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
                     using (reader) { /* dispose if non-null */ }
                     if (wasClosed) cnn.Close();
+#else
+                    await using (reader) { /* dispose if non-null */ }
+                    if (wasClosed)
+                    {
+                        if (cnn is DbConnection dbConn)
+                        {
+                            await dbConn.CloseAsync();
+                        }
+                        else
+                        {
+                            cnn.Close();
+                        }
+                    }
+#endif               
                 }
             }
         }
@@ -593,23 +631,39 @@ namespace Dapper
                         while (pending.Count != 0)
                         {
                             var pair = pending.Dequeue();
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
                             using (pair.Command) { /* dispose commands */ }
+#else
+                            await using (pair.Command) { /* dispose commands */ }
+#endif
                             total += await pair.Task.ConfigureAwait(false);
                         }
                     }
                     finally
                     {
                         // this only has interesting work to do if there are failures
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
                         using (cmd) { /* dispose commands */ }
+#else
+                        await using (cmd) { /* dispose commands */ }
+#endif          
                         while (pending.Count != 0)
                         { // dispose tasks even in failure
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
                             using (pending.Dequeue().Command) { /* dispose commands */ }
+#else
+                            await using (pending.Dequeue().Command) { /* dispose commands */ }
+#endif                               
                         }
                     }
                 }
                 else
                 {
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
                     using (var cmd = command.TrySetupAsyncCommand(cnn, null))
+#else
+                    await using (var cmd = command.TrySetupAsyncCommand(cnn, null))
+#endif                    
                     {
                         foreach (var obj in multiExec)
                         {
@@ -635,7 +689,21 @@ namespace Dapper
             }
             finally
             {
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
                 if (wasClosed) cnn.Close();
+#else                    
+                if (wasClosed)
+                {
+                    if (cnn is DbConnection dbConn)
+                    {
+                        await dbConn.CloseAsync();
+                    }
+                    else
+                    {
+                        cnn.Close();
+                    }
+                }
+#endif               
             }
             return total;
         }
@@ -645,7 +713,11 @@ namespace Dapper
             var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param?.GetType());
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
-            using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#else
+		    await using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#endif            
             {
                 try
                 {
@@ -656,7 +728,21 @@ namespace Dapper
                 }
                 finally
                 {
-                    if (wasClosed) cnn.Close();
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
+                if (wasClosed) cnn.Close();
+#else                    
+                if (wasClosed)
+                {
+                    if (cnn is DbConnection dbConn)
+                    {
+                        await dbConn.CloseAsync();
+                    }
+                    else
+                    {
+                        cnn.Close();
+                    }
+                }
+#endif          
                 }
             }
         }
@@ -916,8 +1002,13 @@ namespace Dapper
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+    		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
                 using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+#else
+		        await using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+                await using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+#endif            
                 {
                     if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
                     var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
@@ -926,7 +1017,21 @@ namespace Dapper
             }
             finally
             {
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
                 if (wasClosed) cnn.Close();
+#else                    
+                if (wasClosed)
+                {
+                    if (cnn is DbConnection dbConn)
+                    {
+                        await dbConn.CloseAsync();
+                    }
+                    else
+                    {
+                        cnn.Close();
+                    }
+                }
+#endif          
             }
         }
 
@@ -966,8 +1071,13 @@ namespace Dapper
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+    		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
                 using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+#else
+		        await using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+                await using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+#endif            
                 {
                     var results = MultiMapImpl(null, default(CommandDefinition), types, map, splitOn, reader, identity, true);
                     return command.Buffered ? results.ToList() : results;
@@ -975,12 +1085,26 @@ namespace Dapper
             }
             finally
             {
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
                 if (wasClosed) cnn.Close();
+#else                    
+                if (wasClosed)
+                {
+                    if (cnn is DbConnection dbConn)
+                    {
+                        await dbConn.CloseAsync();
+                    }
+                    else
+                    {
+                        cnn.Close();
+                    }
+                }
+#endif
             }
         }
 
         private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader, object> func, object parameters)
-        {
+        {            
             using (reader)
             {
                 while (reader.Read())
@@ -1016,7 +1140,7 @@ namespace Dapper
             CacheInfo info = GetCacheInfo(identity, param, command.AddToCache);
 
             DbCommand cmd = null;
-            IDataReader reader = null;
+            DbDataReader reader = null;
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
@@ -1042,10 +1166,30 @@ namespace Dapper
                         { /* don't spoil the existing exception */
                         }
                     }
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
                     reader.Dispose();
+#else                    
+                    await reader.DisposeAsync();
+#endif
                 }
+                
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
                 cmd?.Dispose();
                 if (wasClosed) cnn.Close();
+#else                    
+                if(cmd != null) await cmd.DisposeAsync();
+                if (wasClosed)
+                {
+                    if (cnn is DbConnection dbConn)
+                    {
+                        await dbConn.CloseAsync();
+                    }
+                    else
+                    {
+                        cnn.Close();
+                    }
+                }
+#endif
                 throw;
             }
         }
@@ -1151,8 +1295,24 @@ namespace Dapper
             }
             finally
             {
-                if (wasClosed) cnn.Close();
+                
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+                if(wasClosed) cnn.Close();
                 if (cmd != null && disposeCommand) cmd.Dispose();
+#else
+                if(wasClosed) 
+                {
+                    if (cnn is DbConnection dbConn)
+                    {
+                        await dbConn.CloseAsync();
+                    }
+                    else
+                    {
+                        cnn.Close();
+                    }
+                }
+                if (cmd != null && disposeCommand) await cmd.DisposeAsync();
+#endif                
             }
         }
 
@@ -1224,8 +1384,23 @@ namespace Dapper
             }
             finally
             {
-                if (wasClosed) cnn.Close();
+#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+                if(wasClosed) cnn.Close();
                 cmd?.Dispose();
+#else
+                if(wasClosed) 
+                {
+                    if (cnn is DbConnection dbConn)
+                    {
+                        await dbConn.CloseAsync();
+                    }
+                    else
+                    {
+                        cnn.Close();
+                    }
+                }
+                if(cmd != null) await cmd.DisposeAsync();
+#endif                
             }
             return Parse<T>(result);
         }
