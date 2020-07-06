@@ -410,7 +410,7 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             var cancel = command.CancellationToken;
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
 		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
 #else
 		    await using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
@@ -458,7 +458,7 @@ namespace Dapper
                 }
                 finally
                 {
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
                     using (reader) { /* dispose if non-null */ }
                     if (wasClosed) cnn.Close();
 #else
@@ -486,7 +486,7 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             var cancel = command.CancellationToken;
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
 		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
 #else
 		    await using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))            
@@ -517,7 +517,7 @@ namespace Dapper
                 }
                 finally
                 {
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
                     using (reader) { /* dispose if non-null */ }
                     if (wasClosed) cnn.Close();
 #else
@@ -631,7 +631,7 @@ namespace Dapper
                         while (pending.Count != 0)
                         {
                             var pair = pending.Dequeue();
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
                             using (pair.Command) { /* dispose commands */ }
 #else
                             await using (pair.Command) { /* dispose commands */ }
@@ -642,14 +642,14 @@ namespace Dapper
                     finally
                     {
                         // this only has interesting work to do if there are failures
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
                         using (cmd) { /* dispose commands */ }
 #else
                         await using (cmd) { /* dispose commands */ }
 #endif          
                         while (pending.Count != 0)
                         { // dispose tasks even in failure
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
                             using (pending.Dequeue().Command) { /* dispose commands */ }
 #else
                             await using (pending.Dequeue().Command) { /* dispose commands */ }
@@ -659,7 +659,7 @@ namespace Dapper
                 }
                 else
                 {
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
                     using (var cmd = command.TrySetupAsyncCommand(cnn, null))
 #else
                     await using (var cmd = command.TrySetupAsyncCommand(cnn, null))
@@ -689,7 +689,7 @@ namespace Dapper
             }
             finally
             {
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
+#if NET461 || NETSTANDARD2_0                    
                 if (wasClosed) cnn.Close();
 #else                    
                 if (wasClosed)
@@ -713,7 +713,7 @@ namespace Dapper
             var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param?.GetType());
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
 		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
 #else
 		    await using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
@@ -728,7 +728,7 @@ namespace Dapper
                 }
                 finally
                 {
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
+#if NET461 || NETSTANDARD2_0                    
                 if (wasClosed) cnn.Close();
 #else                    
                 if (wasClosed)
@@ -1002,7 +1002,7 @@ namespace Dapper
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
     		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
                 using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
 #else
@@ -1017,7 +1017,7 @@ namespace Dapper
             }
             finally
             {
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
+#if NET461 || NETSTANDARD2_0                    
                 if (wasClosed) cnn.Close();
 #else                    
                 if (wasClosed)
@@ -1071,7 +1071,7 @@ namespace Dapper
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
     		    using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
                 using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
 #else
@@ -1085,7 +1085,7 @@ namespace Dapper
             }
             finally
             {
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
+#if NET461 || NETSTANDARD2_0                    
                 if (wasClosed) cnn.Close();
 #else                    
                 if (wasClosed)
@@ -1166,14 +1166,14 @@ namespace Dapper
                         { /* don't spoil the existing exception */
                         }
                     }
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
+#if NET461 || NETSTANDARD2_0                    
                     reader.Dispose();
 #else                    
                     await reader.DisposeAsync();
 #endif
                 }
                 
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1                    
+#if NET461 || NETSTANDARD2_0                    
                 cmd?.Dispose();
                 if (wasClosed) cnn.Close();
 #else                    
@@ -1296,7 +1296,7 @@ namespace Dapper
             finally
             {
                 
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
                 if(wasClosed) cnn.Close();
                 if (cmd != null && disposeCommand) cmd.Dispose();
 #else
@@ -1384,7 +1384,7 @@ namespace Dapper
             }
             finally
             {
-#if NET45 || NET461 || NET471 || NETSTANDARD1_3 || NETSTANDARD2_0 || NETCOREAPP2_1
+#if NET461 || NETSTANDARD2_0
                 if(wasClosed) cnn.Close();
                 cmd?.Dispose();
 #else
